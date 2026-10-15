@@ -3,3 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 .vscode/
+.txt
+.csv
+.png
+.docx
+.pdf
