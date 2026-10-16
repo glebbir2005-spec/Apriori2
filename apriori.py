@@ -4,7 +4,8 @@ import itertools
 
 def apriori(transactions, min_support_pct):
     """
-    Функция алгоритма Apriori.
+    Функция алгоритма Apriori. Находит частые наборы.
+    Возвращает словарь {frozenset(набор): поддержка_в_процентах}
     """
     num_transactions = len(transactions)
     min_supp_count = (min_support_pct / 100.0) * num_transactions
@@ -29,7 +30,6 @@ def apriori(transactions, min_support_pct):
             break
             
         candidate_counts = defaultdict(int)
-        
         valid_transactions = [t for t in transaction_sets if len(t) >= k]
         
         for t in valid_transactions:
@@ -42,17 +42,16 @@ def apriori(transactions, min_support_pct):
         all_frequent_itemsets.update(current_L)
         k += 1
 
-    results = []
+    results = {}
     for itemset, count in all_frequent_itemsets.items():
         supp_pct = (count / num_transactions) * 100
-        results.append((itemset, supp_pct))
+        results[itemset] = supp_pct
         
     return results
 
+
 def get_candidates(Lk_minus_1, k):
-    """
-    Генерация кандидатов размера k на основе частых наборов размера k-1.
-    """
+    """Генерация кандидатов размера k на основе частых наборов размера k-1."""
     candidates = set()
     Lk_list = list(Lk_minus_1)
     
@@ -74,3 +73,34 @@ def get_candidates(Lk_minus_1, k):
                     candidates.add(union_set)
                     
     return candidates
+
+
+def generate_rules(frequent_itemsets, min_confidence_pct):
+    """
+    Генерация ассоциативных правил на основе словаря частых наборов.
+    """
+    rules = []
+    
+    for itemset in frequent_itemsets.keys():
+        if len(itemset) >= 2:
+            subsets = []
+            for i in range(1, len(itemset)):
+                subsets.extend([frozenset(x) for x in itertools.combinations(itemset, i)])
+            
+            for antecedent in subsets:
+                consequent = itemset - antecedent
+                
+                support_AB = frequent_itemsets[itemset]
+                support_A = frequent_itemsets[antecedent]
+                
+                confidence_pct = (support_AB / support_A) * 100
+                
+                if confidence_pct >= min_confidence_pct:
+                    rules.append({
+                        'antecedent': antecedent,
+                        'consequent': consequent,
+                        'support': support_AB,
+                        'confidence': confidence_pct
+                    })
+                    
+    return rules
